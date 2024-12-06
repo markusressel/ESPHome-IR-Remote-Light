@@ -1,0 +1,253 @@
+esphome:
+  name: esphome_light_ir_remote
+  platform: ESP32
+  board: esp32dev
+
+globals:
+  - id: last_set_light_on_state
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: last_set_light_brightness
+    type: float
+    restore_value: yes
+    initial_value: '100'
+
+wifi:
+  fast_connect: True  # needed for hidden SSID
+  networks:
+    - ssid: 'YourSSID'
+      bssid: '00:00:00:00:00:00'
+      password: 'YourPassword'
+      hidden: true
+  #manual_ip:
+  #  static_ip: 192.168.5.49
+  #  gateway: 192.168.5.1
+  #  subnet: 255.255.255.0
+
+remote_transmitter:
+  pin: GPIO5
+  carrier_duty_percent: 50%
+
+# Bild Beleuchtung Gold Batteriebetrieben
+
+script:
+  - id: turn_on
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FF22DD
+          nbits: 32
+      - globals.set:
+          id: last_set_light_on_state
+          value: 'true'
+      - script.execute: apply_brightness
+  - id: turn_off
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FFC23D
+          nbits: 32
+      - globals.set:
+          id: last_set_light_on_state
+          value: 'false'
+      - script.execute: apply_brightness
+
+  - id: set_brightness_10
+    then:
+      - globals.set:
+          id: last_set_light_brightness
+          value: "10"
+      - script.execute: apply_brightness
+
+  - id: set_brightness_30
+    then:
+      - globals.set:
+          id: last_set_light_brightness
+          value: "30"
+      - script.execute: apply_brightness
+
+  - id: set_brightness_50
+    then:
+      - globals.set:
+          id: last_set_light_brightness
+          value: "50"
+      - script.execute: apply_brightness
+
+  - id: set_brightness_70
+    then:
+      - globals.set:
+          id: last_set_light_brightness
+          value: "70"
+      - script.execute: apply_brightness
+
+  - id: set_brightness_100
+    then:
+      - globals.set:
+          id: last_set_light_brightness
+          value: "100"
+      - script.execute: apply_brightness
+
+  - id: apply_brightness
+    then:
+      - remote_transmitter.transmit_lg:
+          data: !lambda |-
+              uint32_t brightness = id(last_set_light_brightness);
+              if (brightness == 100) {
+              return 0x00FFB04F;
+              } else if (brightness == 70) {
+              return 0x00FF9867;
+              } else if (brightness == 50) {
+              return 0x00FF6897;
+              } else if (brightness == 30) {
+              return 0x00FF906F;
+              } else if (brightness == 10) {
+              return 0x00FFE01F;
+              } else {
+              return 0x00FFB04F;
+              }
+          nbits: 32
+
+  - id: increase_brightness
+    then:
+      - globals.set:
+          id: last_set_light_brightness
+          value: !lambda |-
+              float brightness = id(last_set_light_brightness);
+              if (brightness == 100) {
+              return 100;
+              } else if (brightness == 70) {
+              return 100;
+              } else if (brightness == 50) {
+              return 70;
+              } else if (brightness == 30) {
+              return 50;
+              } else if (brightness == 10) {
+              return 30;
+              } else {
+              return 100;
+              }
+      - script.execute: apply_brightness
+
+  - id: decrease_brightness
+    then:
+      - globals.set:
+          id: last_set_light_brightness
+          value: !lambda |-
+              float brightness = id(last_set_light_brightness);
+              if (brightness == 100) {
+              return 70;
+              } else if (brightness == 70) {
+              return 50;
+              } else if (brightness == 50) {
+              return 30;
+              } else if (brightness == 30) {
+              return 10;
+              } else if (brightness == 10) {
+              return 10;
+              } else {
+              return 100;
+              }
+      - script.execute: apply_brightness
+
+  - id: set_color_temp_cold
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FF30CF
+          nbits: 32
+
+  - id: set_color_temp_warm
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FF18E7
+          nbits: 32
+
+  - id: set_color_temp_very_warm
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FF7A85
+          nbits: 32
+
+  - id: set_timer_15m
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FF10EF
+          nbits: 32
+
+  - id: set_timer_30m
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FF38C7
+          nbits: 32
+
+  - id: set_timer_60m
+    then:
+      - remote_transmitter.transmit_lg:
+          data: 0x00FF5AA5
+          nbits: 32
+
+button:
+
+  - platform: template
+    name: "Brightness 100%"
+    on_press:
+      - script.execute: set_brightness_100
+  - platform: template
+    name: "Brightness 70%"
+    on_press:
+      - script.execute: set_brightness_70
+  - platform: template
+    name: "Brightness 50%"
+    on_press:
+      - script.execute: set_brightness_50
+  - platform: template
+    name: "Brightness 30%"
+    on_press:
+      - script.execute: set_brightness_30
+  - platform: template
+    name: "Brightness 10%"
+    on_press:
+      - script.execute: set_brightness_10
+
+  - platform: template
+    name: "Color Cold"
+    on_press:
+      - script.execute: set_color_temp_cold
+
+  - platform: template
+    name: "Color Warm"
+    on_press:
+      - script.execute: set_color_temp_warm
+
+  - platform: template
+    name: "Color Very Warm"
+    on_press:
+      - script.execute: set_color_temp_very_warm
+
+  - platform: template
+    name: "Timer 15m"
+    on_press:
+      - script.execute: set_timer_15m
+
+  - platform: template
+    name: "Timer 30m"
+    on_press:
+      - script.execute: set_timer_30m
+
+  - platform: template
+    name: "Timer 60m"
+    on_press:
+      - script.execute: set_timer_60m
+
+switch:
+  - platform: template
+    name: "On/Off"
+    lambda: |-
+      if (id(last_set_light_on_state)) {
+        return true;
+      } else {
+        return false;
+      }
+    turn_on_action:
+      - script.execute: turn_on
+    turn_off_action:
+      - script.execute: turn_off
