@@ -32,6 +32,12 @@
 Add the ESPHome device to Home Assistant via the "Integrations" page.
 The sensors and buttons will automatically appear.
 
+# Attributions
+
+The setup to find out the IR codes was done using this very helpful thread on the Home Assistant forums: [Faking an IR remote control using ESPHome](https://community.home-assistant.io/t/faking-an-ir-remote-control-using-esphome/369071)
+
+Many thanks to all the people who contributed to the [ESPHome][esphome] project.
+
 # License
 
 CC0 see [LICENSE](LICENSE)
