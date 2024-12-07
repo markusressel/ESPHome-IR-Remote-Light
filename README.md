@@ -21,6 +21,10 @@
 * An IR transmitter board
   <p><img src="images/ir-transmitter-board.png" width=128 alt="IR Transmitter Board"></p>
 
+## Analyzing existing remote controls
+
+Have a look at this excellent guide to find out the IR codes of your remote control: [Faking an IR remote control using ESPHome](https://community.home-assistant.io/t/faking-an-ir-remote-control-using-esphome/369071)
+
 ## Flashing the firmware
 
 * Create a new ESPHome configuration YAML file
