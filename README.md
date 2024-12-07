@@ -6,6 +6,8 @@
 
 <p align="center"><img src="images/example-product.png" width=512 alt="Example Product"></p>
 
+<p align="center"><img src="images/hass-device-controls.png" width=512 alt="Home Assistant Device controls"></p>
+
 ## Features
 
 * [x] Based on [ESPHome][esphome]
