@@ -19,6 +19,7 @@
 * An ESP8266, ESP32 or similar board
   * A power supply (preferrably USB)
 * An IR transmitter board
+  <p><img src="images/ir-transmitter-board.png" width=128 alt="IR Transmitter Board"></p>
 
 ## Flashing the firmware
 
