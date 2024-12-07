@@ -14,6 +14,11 @@ globals:
     restore_value: yes
     initial_value: '100'
 
+  - id: last_set_light_color_temp
+    type: std::string
+    restore_value: yes
+    initial_value: '"cold"'
+
 wifi:
   fast_connect: True  # needed for hidden SSID
   networks:
@@ -31,7 +36,6 @@ remote_transmitter:
   carrier_duty_percent: 50%
 
 # Bild Beleuchtung Gold Batteriebetrieben
-
 
 script:
   - id: turn_on
@@ -91,23 +95,27 @@ script:
 
   - id: apply_brightness
     then:
-      - remote_transmitter.transmit_lg:
-          data: !lambda |-
-            uint32_t brightness = id(last_set_light_brightness);
-            if (brightness == 100) {
-              return 0x00FFB04F;
-            } else if (brightness == 70) {
-              return 0x00FF9867;
-            } else if (brightness == 50) {
-              return 0x00FF6897;
-            } else if (brightness == 30) {
-              return 0x00FF906F;
-            } else if (brightness == 10) {
-              return 0x00FFE01F;
-            } else {
-              return 0x00FFB04F;
-            }
-          nbits: 32
+      - if:
+          condition:
+            - lambda: 'return id(last_set_light_on_state);'
+          then:
+            - remote_transmitter.transmit_lg:
+                data: !lambda |-
+                  uint32_t brightness = id(last_set_light_brightness);
+                  if (brightness == 100) {
+                    return 0x00FFB04F;
+                  } else if (brightness == 70) {
+                    return 0x00FF9867;
+                  } else if (brightness == 50) {
+                    return 0x00FF6897;
+                  } else if (brightness == 30) {
+                    return 0x00FF906F;
+                  } else if (brightness == 10) {
+                    return 0x00FFE01F;
+                  } else {
+                    return 0x00FFB04F;
+                  }
+                nbits: 32
 
   - id: increase_brightness
     then:
@@ -174,23 +182,24 @@ script:
 
   - id: apply_color_temp
     then:
-      - remote_transmitter.transmit_lg:
-          data: !lambda |-
-            std::string color_temp = id(last_set_light_color_temp);
-            if (color_temp == "cold") {
-              id(ir_remote_color_temp_select).publish_state("cold");
-              return 0x00FF30CF;
-            } else if (color_temp == "mixed") {
-              id(ir_remote_color_temp_select).publish_state("mixed");
-              return 0x00FF08F7;
-            } else if (color_temp == "warm") {
-              id(ir_remote_color_temp_select).publish_state("warm");
-              return 0x00FF7A85;
-            } else {
-              return 0x00FF30CF;
-            }
-          nbits: 32
-          repeat: 2
+      - if:
+          condition:
+            - lambda: 'return id(last_set_light_on_state);'
+          then:
+            - remote_transmitter.transmit_lg:
+                data: !lambda |-
+                  std::string color_temp = id(last_set_light_color_temp);
+                  if (color_temp == "cold") {
+                    return 0x00FF30CF;
+                  } else if (color_temp == "mixed") {
+                    return 0x00FF18E7;
+                  } else if (color_temp == "warm") {
+                    return 0x00FF7A85;
+                  } else {
+                    return 0x00FF30CF;
+                  }
+                nbits: 32
+                repeat: 2
 
   - id: set_timer_15m
     then:
@@ -255,6 +264,7 @@ select:
           } else if (x == "warm") {
             id(set_color_temp_warm).execute();
           }
+      - component.update: ir_remote_color_temp_select
     options:
       - cold
       - mixed
@@ -262,6 +272,7 @@ select:
 
 number:
   - platform: template
+    id: ir_remote_brightness_number
     name: "Brightness Level"
     min_value: 1
     max_value: 5
@@ -294,3 +305,17 @@ number:
           } else if (x == 5) {
             id(set_brightness_100).execute();
           }
+      - component.update: ir_remote_brightness_number
+
+
+interval:
+  # ensure the real world state matches our internal state by regularly sending the last set state
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            - lambda: 'return id(last_set_light_on_state);'
+          then:
+            - script.execute: turn_on
+          else:
+            - script.execute: turn_off
