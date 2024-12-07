@@ -221,22 +221,26 @@ script:
 
 button:
   - platform: template
+    id: ir_remote_timer_15m_button
     name: "Timer 15m"
     on_press:
       - script.execute: set_timer_15m
 
   - platform: template
+    id: ir_remote_timer_30m_button
     name: "Timer 30m"
     on_press:
       - script.execute: set_timer_30m
 
   - platform: template
+    id: ir_remote_timer_60m_button
     name: "Timer 60m"
     on_press:
       - script.execute: set_timer_60m
 
 switch:
   - platform: template
+    id: ir_remote_on_off_switch
     name: "On/Off"
     lambda: |-
       if (id(last_set_light_on_state)) {
