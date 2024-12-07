@@ -32,6 +32,7 @@ remote_transmitter:
 
 # Bild Beleuchtung Gold Batteriebetrieben
 
+
 script:
   - id: turn_on
     then:
@@ -42,6 +43,8 @@ script:
           id: last_set_light_on_state
           value: 'true'
       - script.execute: apply_brightness
+      - script.execute: apply_color_temp
+
   - id: turn_off
     then:
       - remote_transmitter.transmit_lg:
@@ -50,7 +53,6 @@ script:
       - globals.set:
           id: last_set_light_on_state
           value: 'false'
-      - script.execute: apply_brightness
 
   - id: set_brightness_10
     then:
@@ -91,20 +93,20 @@ script:
     then:
       - remote_transmitter.transmit_lg:
           data: !lambda |-
-              uint32_t brightness = id(last_set_light_brightness);
-              if (brightness == 100) {
+            uint32_t brightness = id(last_set_light_brightness);
+            if (brightness == 100) {
               return 0x00FFB04F;
-              } else if (brightness == 70) {
+            } else if (brightness == 70) {
               return 0x00FF9867;
-              } else if (brightness == 50) {
+            } else if (brightness == 50) {
               return 0x00FF6897;
-              } else if (brightness == 30) {
+            } else if (brightness == 30) {
               return 0x00FF906F;
-              } else if (brightness == 10) {
+            } else if (brightness == 10) {
               return 0x00FFE01F;
-              } else {
+            } else {
               return 0x00FFB04F;
-              }
+            }
           nbits: 32
 
   - id: increase_brightness
@@ -112,20 +114,20 @@ script:
       - globals.set:
           id: last_set_light_brightness
           value: !lambda |-
-              float brightness = id(last_set_light_brightness);
-              if (brightness == 100) {
+            float brightness = id(last_set_light_brightness);
+            if (brightness == 100) {
               return 100;
-              } else if (brightness == 70) {
+            } else if (brightness == 70) {
               return 100;
-              } else if (brightness == 50) {
+            } else if (brightness == 50) {
               return 70;
-              } else if (brightness == 30) {
+            } else if (brightness == 30) {
               return 50;
-              } else if (brightness == 10) {
+            } else if (brightness == 10) {
               return 30;
-              } else {
+            } else {
               return 100;
-              }
+            }
       - script.execute: apply_brightness
 
   - id: decrease_brightness
@@ -133,39 +135,62 @@ script:
       - globals.set:
           id: last_set_light_brightness
           value: !lambda |-
-              float brightness = id(last_set_light_brightness);
-              if (brightness == 100) {
+            float brightness = id(last_set_light_brightness);
+            if (brightness == 100) {
               return 70;
-              } else if (brightness == 70) {
+            } else if (brightness == 70) {
               return 50;
-              } else if (brightness == 50) {
+            } else if (brightness == 50) {
               return 30;
-              } else if (brightness == 30) {
+            } else if (brightness == 30) {
               return 10;
-              } else if (brightness == 10) {
+            } else if (brightness == 10) {
               return 10;
-              } else {
+            } else {
               return 100;
-              }
+            }
       - script.execute: apply_brightness
 
   - id: set_color_temp_cold
     then:
-      - remote_transmitter.transmit_lg:
-          data: 0x00FF30CF
-          nbits: 32
+      - globals.set:
+          id: last_set_light_color_temp
+          value: '"cold"'
+      - script.execute: apply_color_temp
+
+  - id: set_color_temp_mixed
+    then:
+      - globals.set:
+          id: last_set_light_color_temp
+          value: '"mixed"'
+      - script.execute: apply_color_temp
 
   - id: set_color_temp_warm
     then:
-      - remote_transmitter.transmit_lg:
-          data: 0x00FF18E7
-          nbits: 32
+      - globals.set:
+          id: last_set_light_color_temp
+          value: '"warm"'
+      - script.execute: apply_color_temp
 
-  - id: set_color_temp_very_warm
+  - id: apply_color_temp
     then:
       - remote_transmitter.transmit_lg:
-          data: 0x00FF7A85
+          data: !lambda |-
+            std::string color_temp = id(last_set_light_color_temp);
+            if (color_temp == "cold") {
+              id(ir_remote_color_temp_select).publish_state("cold");
+              return 0x00FF30CF;
+            } else if (color_temp == "mixed") {
+              id(ir_remote_color_temp_select).publish_state("mixed");
+              return 0x00FF08F7;
+            } else if (color_temp == "warm") {
+              id(ir_remote_color_temp_select).publish_state("warm");
+              return 0x00FF7A85;
+            } else {
+              return 0x00FF30CF;
+            }
           nbits: 32
+          repeat: 2
 
   - id: set_timer_15m
     then:
@@ -186,43 +211,6 @@ script:
           nbits: 32
 
 button:
-
-  - platform: template
-    name: "Brightness 100%"
-    on_press:
-      - script.execute: set_brightness_100
-  - platform: template
-    name: "Brightness 70%"
-    on_press:
-      - script.execute: set_brightness_70
-  - platform: template
-    name: "Brightness 50%"
-    on_press:
-      - script.execute: set_brightness_50
-  - platform: template
-    name: "Brightness 30%"
-    on_press:
-      - script.execute: set_brightness_30
-  - platform: template
-    name: "Brightness 10%"
-    on_press:
-      - script.execute: set_brightness_10
-
-  - platform: template
-    name: "Color Cold"
-    on_press:
-      - script.execute: set_color_temp_cold
-
-  - platform: template
-    name: "Color Warm"
-    on_press:
-      - script.execute: set_color_temp_warm
-
-  - platform: template
-    name: "Color Very Warm"
-    on_press:
-      - script.execute: set_color_temp_very_warm
-
   - platform: template
     name: "Timer 15m"
     on_press:
@@ -251,3 +239,58 @@ switch:
       - script.execute: turn_on
     turn_off_action:
       - script.execute: turn_off
+
+select:
+  - platform: template
+    id: ir_remote_color_temp_select
+    name: "Color Temperature"
+    lambda: |-
+      return id(last_set_light_color_temp);
+    set_action:
+      - lambda: |-
+          if (x == "cold") {
+            id(set_color_temp_cold).execute();
+          } else if (x == "mixed") {
+            id(set_color_temp_mixed).execute();
+          } else if (x == "warm") {
+            id(set_color_temp_warm).execute();
+          }
+    options:
+      - cold
+      - mixed
+      - warm
+
+number:
+  - platform: template
+    name: "Brightness Level"
+    min_value: 1
+    max_value: 5
+    step: 1
+    lambda: |-
+      float brightness = id(last_set_light_brightness);
+      if (brightness == 100) {
+        return 5;
+      } else if (brightness == 70) {
+        return 4;
+      } else if (brightness == 50) {
+        return 3;
+      } else if (brightness == 30) {
+        return 2;
+      } else if (brightness == 10) {
+        return 1;
+      } else {
+        return 5;
+      }
+    set_action:
+      - lambda: |-
+          if (x == 1) {
+            id(set_brightness_10).execute();
+          } else if (x == 2) {
+            id(set_brightness_30).execute();
+          } else if (x == 3) {
+            id(set_brightness_50).execute();
+          } else if (x == 4) {
+            id(set_brightness_70).execute();
+          } else if (x == 5) {
+            id(set_brightness_100).execute();
+          }
