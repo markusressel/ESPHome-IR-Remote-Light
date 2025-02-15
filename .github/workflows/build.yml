@@ -22,4 +22,4 @@ jobs:
       - name: ESPHome Builder
         uses: esphome/build-action@v6.0.0
         with:
-          yaml-file: esphme-ir-light.yaml
+          yaml-file: esphome-ir-light.yaml
