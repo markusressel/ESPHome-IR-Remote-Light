@@ -1,6 +1,7 @@
 esphome:
   name: esphome_light_ir_remote
-  platform: ESP32
+
+esp32:
   board: esp32dev
 
 globals:
