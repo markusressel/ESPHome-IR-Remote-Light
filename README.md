@@ -17,7 +17,7 @@
 ## What you need
 
 * An ESP8266, ESP32 or similar board
-  * A power supply (preferrably USB)
+  * A power supply (preferably USB)
 * An IR transmitter board
   <p><img src="images/ir-transmitter-board.png" width=128 alt="IR Transmitter Board"></p>
 
@@ -29,7 +29,7 @@ Have a look at this excellent guide to find out the IR codes of your remote cont
 
 * Create a new ESPHome configuration YAML file
 * Copy the contents of [esphome-ir-light.yaml](esphome-ir-light.yaml) into it
-* Customize the basic device cnfiguration (Board, WiFi, etc.) to your liking
+* Customize the basic device configuration (Board, WiFi, etc.) to your liking
 * Flash it onto your ESP based board
 
 ## Connect to Home Assistant
